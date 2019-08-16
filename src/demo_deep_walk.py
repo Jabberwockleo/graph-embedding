@@ -13,6 +13,15 @@ FN_ITEM_TITLE = "../data/item_title.index"
 FN_UI_ADJ = "../data/user_items.adjlist"
 FN_CORPUS = "../data/random_walks.corpus"
 
+# Utilities
+def verbose_time():
+    import time
+    from datetime import datetime
+    utc_ts = int(time.time())
+    time_str = datetime.fromtimestamp(utc_ts).strftime('%Y-%m-%d %H:%M:%S')
+    print(time_str)
+verbose_time()
+
 def load_item_titles(fn):
     """
         Load item titles
@@ -82,7 +91,9 @@ random.sample(list(G.neighbors("U1")), 1)
 
 # Create walker
 import graphwalker
-walker = graphwalker.GraphWalker(G, p=1, q=1)
+verbose_time()
+walker = graphwalker.GraphWalker(G, p=1, q=2)
+verbose_time()
 
 def sample_walks(iterator, num_samples):
     arr = []
@@ -104,11 +115,15 @@ def generate_corpus(generator, fn_corpus):
     with open(fn_corpus, "w") as fd:
         for walk in generator:
             fd.write("{}\n".format(" ".join(walk)))
+verbose_time()
 generate_corpus(walker.simulate_walks(num_epochs=5, walk_len=10), FN_CORPUS)
+verbose_time()
 
 # Learn embeddings
 import word2vec as w2v
+verbose_time()
 model = w2v.learn(FN_CORPUS, num_dims=32, window_size=5)
+verbose_time()
 
 # Save
 w2v.save(model, "../output/user_item.emb", "../output/user_item.vocab")
