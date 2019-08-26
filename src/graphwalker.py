@@ -15,7 +15,7 @@ class GraphWalker(object):
     """
         Wraps a NetworkX graph and associates some random walk methods
     """
-    def __init__(self, G, p, q, is_weighted=True):
+    def __init__(self, G, p, q, is_weighted=True, num_sample_neighbors=None):
         """
             Initializer
             Params:
@@ -23,6 +23,9 @@ class GraphWalker(object):
                 p: the return hyperparameter
                 q: the inout hyperparameter
                 is_weighted: whether edges are weighted differently
+                num_sample_neighbors: if not None (by default)
+                    sample num_sample_neighbors neighbors
+                    if number of neighbors is greater than num_sample_neighbors
                 The unnormalized walk probability is computed as follows:
                     W(preceding node's neigbors) = 1
                     W(preceding node) = 1/p
@@ -33,11 +36,28 @@ class GraphWalker(object):
         self.p = p
         self.q = q
         self.is_weighted = is_weighted
+        self.num_sample_neighbors = num_sample_neighbors
         if p == 1 and q == 1 and is_weighted == False:
             self.is_vanilla_deep_walk = True
         else:
             self.is_vanilla_deep_walk = False
             self.__precompute_transition_probabilities()
+
+
+    def __uniform_sample(arr, num):
+        """
+            Uniformly sample from list
+            Params:
+                arr: list to sample from
+            Return:
+                Sampled list
+        """
+        sampled = []
+        interval = 1.0 / (num - 1)
+        for intidx in range(num):
+            idx = math.floor(intidx * interval)
+            sampled.append(arr[idx])
+        return sampled
 
 
     def __setup_alias_node2node(self, node):
@@ -48,8 +68,12 @@ class GraphWalker(object):
                 dst: end node of current edge
         """
         G = self.G
+        adjacent_nodes = sorted(G.neighbors(node))
+        if self.num_sample_neighbors is not None:
+            if len(adjacent_nodes) > self.num_sample_neighbors:
+                adjacent_nodes = self.__uniform_sample(adjacent_nodes, self.num_sample_neighbors)
 
-        unnormalized_probs = [G[node][nbr]['weight'] for nbr in sorted(G.neighbors(node))]
+        unnormalized_probs = [G[node][nbr]['weight'] for nbr in adjacent_nodes]
         norm_const = sum(unnormalized_probs)
         normalized_probs =  [float(u_prob)/norm_const for u_prob in unnormalized_probs]
 
@@ -69,8 +93,13 @@ class GraphWalker(object):
         p = self.p
         q = self.q
 
+        adjacent_nodes = sorted(G.neighbors(dst)) # sorting ensures consistency
+        if self.num_sample_neighbors is not None:
+            if len(adjacent_nodes) > self.num_sample_neighbors:
+                adjacent_nodes = self.__uniform_sample(adjacent_nodes, self.num_sample_neighbors)
+
         unnormalized_probs = []
-        for dst_nbr in sorted(G.neighbors(dst)): # sorting ensures consistency
+        for dst_nbr in adjacent_nodes:
             if dst_nbr == src:
                 unnormalized_probs.append(G[dst][dst_nbr]['weight']/p)
             elif G.has_edge(dst_nbr, src):
