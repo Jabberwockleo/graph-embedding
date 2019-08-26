@@ -7,6 +7,7 @@
 # Last Modified By  : Wan Li
 
 import importlib as imp
+import math
 import random
 import aliasmethod as am
 am = imp.reload(am)
@@ -44,7 +45,7 @@ class GraphWalker(object):
             self.__precompute_transition_probabilities()
 
 
-    def __uniform_sample(arr, num):
+    def __uniform_sample(self, arr, num):
         """
             Uniformly sample from list
             Params:
