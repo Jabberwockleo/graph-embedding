@@ -16,7 +16,7 @@ class GraphWalker(object):
     """
         Wraps a NetworkX graph and associates some random walk methods
     """
-    def __init__(self, G, p, q, is_weighted=True, num_sample_neighbors=None):
+    def __init__(self, G, p, q, is_weighted=True, num_sample_neighbors=None, sort_to_ensure_alias=True):
         """
             Initializer
             Params:
@@ -27,6 +27,7 @@ class GraphWalker(object):
                 num_sample_neighbors: if not None (by default)
                     sample num_sample_neighbors neighbors
                     if number of neighbors is greater than num_sample_neighbors
+                sort_to_ensure_alias: ensure node reference of alias sampling is stable
                 The unnormalized walk probability is computed as follows:
                     W(preceding node's neigbors) = 1
                     W(preceding node) = 1/p
@@ -38,6 +39,7 @@ class GraphWalker(object):
         self.q = q
         self.is_weighted = is_weighted
         self.num_sample_neighbors = num_sample_neighbors
+        self.sort_to_ensure_alias = sort_to_ensure_alias
         if p == 1 and q == 1 and is_weighted == False:
             self.is_vanilla_deep_walk = True
         else:
@@ -69,7 +71,9 @@ class GraphWalker(object):
                 dst: end node of current edge
         """
         G = self.G
-        adjacent_nodes = sorted(G.neighbors(node))
+        adjacent_nodes = G.neighbors(node)
+        if self.sort_to_ensure_alias == True:
+            adjacent_nodes = sorted(adjacent_nodes)
         if self.num_sample_neighbors is not None:
             if len(adjacent_nodes) > self.num_sample_neighbors:
                 adjacent_nodes = self.__uniform_sample(adjacent_nodes, self.num_sample_neighbors)
@@ -94,7 +98,9 @@ class GraphWalker(object):
         p = self.p
         q = self.q
 
-        adjacent_nodes = sorted(G.neighbors(dst)) # sorting ensures consistency
+        adjacent_nodes = G.neighbors(dst)
+        if self.sort_to_ensure_alias == True:
+            adjacent_nodes = sorted(adjacent_nodes) # sorting ensures consistency
         if self.num_sample_neighbors is not None:
             if len(adjacent_nodes) > self.num_sample_neighbors:
                 adjacent_nodes = self.__uniform_sample(adjacent_nodes, self.num_sample_neighbors)
@@ -163,7 +169,9 @@ class GraphWalker(object):
                 next_node = random.sample(list(self.G.neighbors(cur_node)), 1)[0]
                 walk.append(next_node)
             else:
-                cur_nbrs = sorted(G.neighbors(cur_node))
+                cur_nbrs = G.neighbors(cur_node)
+                if self.sort_to_ensure_alias == True:
+                    cur_nbrs = sorted(cur_nbrs)
                 if len(cur_nbrs) > 0:
                     if len(walk) == 1:
                         next_node = cur_nbrs[am.alias_draw(
