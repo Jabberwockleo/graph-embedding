@@ -71,7 +71,7 @@ class GraphWalker(object):
                 dst: end node of current edge
         """
         G = self.G
-        adjacent_nodes = G.neighbors(node)
+        adjacent_nodes = list(G.neighbors(node))
         if self.sort_to_ensure_alias == True:
             adjacent_nodes = sorted(adjacent_nodes)
         if self.num_sample_neighbors is not None:
@@ -98,7 +98,7 @@ class GraphWalker(object):
         p = self.p
         q = self.q
 
-        adjacent_nodes = G.neighbors(dst)
+        adjacent_nodes = list(G.neighbors(dst))
         if self.sort_to_ensure_alias == True:
             adjacent_nodes = sorted(adjacent_nodes) # sorting ensures consistency
         if self.num_sample_neighbors is not None:
@@ -169,7 +169,7 @@ class GraphWalker(object):
                 next_node = random.sample(list(self.G.neighbors(cur_node)), 1)[0]
                 walk.append(next_node)
             else:
-                cur_nbrs = G.neighbors(cur_node)
+                cur_nbrs = list(G.neighbors(cur_node))
                 if self.sort_to_ensure_alias == True:
                     cur_nbrs = sorted(cur_nbrs)
                 if len(cur_nbrs) > 0:
